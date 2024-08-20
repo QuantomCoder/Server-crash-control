@@ -1,4 +1,5 @@
 const pm2 = require("pm2");
+const { exec } = require("child_process");
 const processIds = require("./config");
 
 // Interval between checks in milliseconds (e.g., 30 seconds)
@@ -20,8 +21,9 @@ function checkAndRestartPM2Processes() {
       }
       // console.log(processList)
       processList.forEach((proc) => {
+        // console.log("ls", proc.pm_id);
         if (processIds.includes(proc.pm_id)) {
-            console.log(proc.pm_id)
+          console.log(proc.pm_id);
           if (proc.pm2_env.status == "online") {
             console.log(proc.pm2_env.status);
           }
@@ -29,18 +31,20 @@ function checkAndRestartPM2Processes() {
             console.log(
               `Process ${proc.name} (ID: ${proc.pm_id}) is ${proc.pm2_env.status}. Restarting...`
             );
-            pm2.restart(proc.pm_id, (err) => {
-              if (err) {
-                console.error(
-                  `Failed to restart process ${proc.name} (ID: ${proc.pm_id}):`,
-                  err
-                );
-              } else {
-                console.log(
-                  `Successfully restarted process ${proc.name} (ID: ${proc.pm_id})`
-                );
-              }
-            });
+            // pm2.restart(proc.pm_id, (err) => {
+            //   console.log("I am here")
+            //   if (err) {
+            //     console.log(
+            //       `Failed to restart process ${proc.name} (ID: ${proc.pm_id}):`,
+            //       err
+            //     );
+            //   } else {
+            //     console.log(
+            //       `Successfully restarted process ${proc.name} (ID: ${proc.pm_id})`
+            //     );
+            //   }
+            // });
+          restart(proc.pm_id)
           }
         }
       });
@@ -56,3 +60,16 @@ setInterval(checkAndRestartPM2Processes, CHECK_INTERVAL);
 
 // Initial check
 checkAndRestartPM2Processes();
+function restart(processId) {
+  try {
+    exec(`pm2 restart ${processId}`, (error) => {
+      if (error) {
+        console.log(error.message)
+        return;
+      }
+      console.log(`Restated succesfully ${processId}`)
+    });
+  } catch (err) {
+    console.log(err);
+  }
+}
